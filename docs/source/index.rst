@@ -17,7 +17,7 @@ Welcome to counterpy's documentation!
    :caption: Contents:
 
 .. argparse::
-   :filename: ../src/counterpy/counterpy.py
+   :module: counterpy.counterpy
    :func: _parser
    :prog: counterpy
 
