@@ -33,7 +33,56 @@
   <div class="section" id="welcome-to-counterpy-s-documentation">
 <h1>Welcome to counterpy’s documentation!<a class="headerlink" href="#welcome-to-counterpy-s-documentation" title="Permalink to this headline">¶</a></h1>
 <p><strong>Counterpy</strong> is a simple script that generates counterpoints (currently only cantus firmi) by using a genetic algorithm.</p>
+<a class="reference internal image-reference" href="_images/image.png"><img alt="CLI" src="_images/image.png" style="width: 400px;" /></a>
 <div class="toctree-wrapper compound">
+</div>
+<p><p>Generate cantus firmus.</p>
+</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">counterpy</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">generations</span> <span class="n">GENERATIONS</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">mode</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">11</span><span class="p">}]</span> <span class="p">[</span><span class="o">-</span><span class="n">l</span> <span class="n">LENGTH</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">p</span> <span class="n">POPULATION</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">r</span> <span class="n">RATE</span><span class="p">]</span>
+                 <span class="p">[</span><span class="o">-</span><span class="n">n</span> <span class="n">NUMBER</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">t</span> <span class="n">TRESHOLD</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="options">
+<h2>options<a class="headerlink" href="#options" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd>--generations</kbd></dt>
+<dd><p>Maximum number of generations.</p>
+<p>Default: 1000</p>
+</dd>
+<dt><kbd>--mode</kbd></dt>
+<dd><p>Possible choices: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11</p>
+<blockquote>
+<div><p>1: ionian (major)
+2: dorian
+3: phrygian
+4: lydian
+5: mixolydian
+6: aeolian (minor)
+7: locrian</p>
+</div></blockquote>
+<p>Default: 1</p>
+</dd>
+<dt><kbd>-l, --length</kbd></dt>
+<dd><p>Desired cantus length.</p>
+<p>Default: 16</p>
+</dd>
+<dt><kbd>-p, --population</kbd></dt>
+<dd><p>sum the integers (default: find the max)</p>
+<p>Default: 20</p>
+</dd>
+<dt><kbd>-r, --rate</kbd></dt>
+<dd><p>sum the integers (default: find the max).</p>
+<p>Default: 1.0</p>
+</dd>
+<dt><kbd>-n, --number</kbd></dt>
+<dd><p>Number of mutations (should probably be                        less than sequence length).</p>
+<p>Default: 3</p>
+</dd>
+<dt><kbd>-t, --treshold</kbd></dt>
+<dd><p>Mutation treshold (0 means sure, 1 impossible)</p>
+<p>Default: 0.5</p>
+</dd>
+</dl>
 </div>
 </div>
 <div class="section" id="indices-and-tables">
