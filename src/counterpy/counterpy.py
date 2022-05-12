@@ -273,38 +273,40 @@ def run_evolution(
     winners = popD[popD.score == popD.score.max()].sequence
     return [i for i in winners], np.max(max_scores)
 
+def create_parser():
+    parser = argparse.ArgumentParser(description='Generate cantus firmus.')
 
-parser = argparse.ArgumentParser(description='Generate cantus firmus.')
+    parser.add_argument('--generations', default=1000, type=int,
+                        help='Maximum number of generations.')
 
-parser.add_argument('--generations', default=1000, type=int,
-                    help='Maximum number of generations.')
+    parser.add_argument('--mode',  default=1, type=int, choices=range(1, 12),
+                        help="""
+                        1: ionian (major)
+                        2: dorian
+                        3: phrygian
+                        4: lydian
+                        5: mixolydian
+                        6: aeolian (minor)
+                        7: locrian""")
 
-parser.add_argument('--mode',  default=1, type=int, choices=range(1, 12),
-                    help="""
-                    1: ionian (major)
-                    2: dorian
-                    3: phrygian
-                    4: lydian
-                    5: mixolydian
-                    6: aeolian (minor)
-                    7: locrian""")
+    parser.add_argument('-l', '--length', default=16, type=int,
+                        help='Desired cantus length.')
 
-parser.add_argument('-l', '--length', default=16, type=int,
-                    help='Desired cantus length.')
+    parser.add_argument('-p', '--population', default=20, type=int,
+                        help='sum the integers (default: find the max)')
 
-parser.add_argument('-p', '--population', default=20, type=int,
-                    help='sum the integers (default: find the max)')
+    parser.add_argument('-r', '--rate',  default=1., type=float,
+                        help='sum the integers (default: find the max).')
 
-parser.add_argument('-r', '--rate',  default=1., type=float,
-                    help='sum the integers (default: find the max).')
+    parser.add_argument('-n', '--number', default=3, type=int,
+                        help='Number of mutations (should probably be\
+                        less than sequence length).')
 
-parser.add_argument('-n', '--number', default=3, type=int,
-                    help='Number of mutations (should probably be\
-                    less than sequence length).')
+    parser.add_argument('-t', '--treshold', default=0.5, type=float,
+                        help='Mutation treshold (0 means sure, 1 impossible)')
+    return parser
 
-parser.add_argument('-t', '--treshold', default=0.5, type=float,
-                    help='Mutation treshold (0 means sure, 1 impossible)')
-
+parser = create_parser()
 args = parser.parse_args()
 key = args.mode + 59
 no_error = True

@@ -1,0 +1,2 @@
+[console_scripts]
+counterpy = counterpy.counterpy:run_evolution

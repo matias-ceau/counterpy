@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: counterpy
-Version: 0.0.0
+Version: 0.0.1
 Summary: Simple CLI cantus firmus generator based on a genetic algorithm
 Home-page: https://github.com/matias-ceau/counterpy
 Author: Matias Ceau
@@ -15,4 +15,3 @@ Classifier: Operating System :: Microsoft :: Windows
 Classifier: Operating System :: POSIX
 Classifier: Operating System :: Unix
 Classifier: Operating System :: MacOS
-Description-Content-Type: text/markdown

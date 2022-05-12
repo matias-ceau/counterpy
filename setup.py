@@ -2,18 +2,18 @@ from setuptools import find_packages, setup
 import pathlib
 
 here = pathlib.Path(__file__).parent.resolve()
-long_description = (here / "README.md").read_text(encoding="utf-8")
+long_description = (here / "README.rst").read_text(encoding="utf-8")
 
 setup(
     name='counterpy',
     packages=find_packages(where='src'),
-    version='0.0.0',
+    version='0.0.1',
     description='Simple CLI cantus firmus generator based on a genetic algorithm',
     author='Matias Ceau',
     author_email="matias@ceau.net",
     long_description=long_description,
-    scripts=['src/counterpy/counterpy.py'],
-    long_description_content_type="text/markdown",
+    entry_points={'console_scripts': ['counterpy=counterpy.counterpy:run_evolution']},
+    #long_description_content_type="text/markdown",
     include_package_data=True,
     license='GPLv3',
     url="https://github.com/matias-ceau/counterpy",
