@@ -11,3 +11,4 @@ src/counterpy.egg-info/entry_points.txt
 src/counterpy.egg-info/requires.txt
 src/counterpy.egg-info/top_level.txt
 src/counterpy/__pycache__/__init__.cpython-310.pyc
+src/counterpy/__pycache__/counterpy.cpython-310.pyc

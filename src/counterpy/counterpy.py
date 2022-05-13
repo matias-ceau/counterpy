@@ -3,6 +3,8 @@ from typing import List, Callable, Tuple
 import pandas as pd
 import time
 import argparse
+from scipy.io import wavfile
+import playsound
 
 Sequence = np.ndarray
 Population = List[Sequence]
@@ -11,9 +13,93 @@ FitnessFunc = Callable
 MAX_RANGE = 12
 MAX_LEAP = 8
 NOTES = np.hstack([np.arange(_+36, 80, 12) for _ in [0, 2, 4, 5, 7, 9, 11]])
+FREQDIV = 2
+OCTAVESHIFT = int(np.log2(FREQDIV))
 
-# COMMON
+# UTILITIES FOR THE CLI INTERFACE
 
+MIDICT = {k: v for k, v in zip(np.arange(12) % 12,
+                               list('C.D.EF.G.A.B')) if v != '.'}
+
+MIDICT = {k: f'\033[7;49;{_}m{v}\033[0m'
+          for (k, v), _ in zip(MIDICT.items(), range(31, 38))}
+
+
+def midi2note(midi):
+    return MIDICT[midi % 12]\
+        + f"\033[3m{str(midi // 12 - 1 - OCTAVESHIFT)}\033[23m"
+
+
+Vm2n = np.vectorize(midi2note)
+
+# AUDIO DATA (IT'S MUCH NICER IN THE REAL PACKAGE, I SWEAR)
+
+enveloppe = np.array([[
+    0., 0.02, 0.04, 0.06, 0.08,
+    0.1, 0.12, 0.14, 0.16, 0.18,
+    0.2, 0.22, 0.24, 0.26, 0.28,
+    0.3, 0.32, 0.34, 0.36, 0.38,
+    0.4, 0.42, 0.44, 0.46, 0.48,
+    0.5, 0.52, 0.54, 0.56, 0.58,
+    0.6, 0.62, 0.64],
+   [0., 0.03125, 0.0625, 0.09375, 0.125,
+    0.15625, 0.1875, 0.21875, 0.25, 0.28125,
+    0.3125, 0.34375, 0.375, 0.40625, 0.4375,
+    0.46875, 0.5, 0.53125, 0.5625, 0.59375,
+    0.625, 0.65625, 0.6875, 0.71875, 0.75,
+    0.78125, 0.8125, 0.84375, 0.875, 0.90625,
+    0.9375, 0.96875, 1.],
+   [0., 1., 0.98136646, 0.9228039, 0.97663413,
+    0.97840875, 0.96509908, 0.92369122, 0.95208518, 0.9509021,
+    0.93167702, 0.92132505, 0.90328305, 0.89056492, 0.87784679,
+    0.6974268, 0.855664, 0.83850932, 0.8166223, 0.80005915,
+    0.78349601, 0.77225673, 0.74563739, 0.73084886, 0.54392192,
+    0.71162378, 0.70008873, 0.67820172, 0.66548358, 0.64507542,
+    0.62939959, 0.42295179, 0.12866016]])
+
+harmonics = [(0.5, 0.525, -1.1),
+             (1.0, 1.0, 2.698),
+             (1.5, 0.373, 0.697),
+             (2.0, 0.089, -1.622),
+             (2.5, 0.21, 1.77),
+             (3.0, 0.136, 0.474)]
+
+
+def get_sine(duration, F, A=4096,
+             aR=1, fR=1, phase=0,
+             sample_rate=44100):
+    t = np.arange(duration*int(sample_rate))  # Time axis
+    wave = aR*A*np.sin(2*np.pi*(fR*F/sample_rate)*t-phase)
+    return wave
+
+def get_wave(duration, freq=None, autodecay=20, s=44100):
+    wave = np.sum([get_sine(duration, A=4096, F=freq,
+                            aR=a, fR=f, phase=p, sample_rate=s)
+                  for f, a, p in harmonics], axis=0)
+
+    t = np.arange(0, len(wave))
+    scaled_env = np.interp(t, enveloppe[1, :]*len(wave), enveloppe[2, :])
+    idx = int(s*autodecay/1000)
+    scaled_env = np.concatenate((scaled_env[:-idx],
+                                 np.linspace(scaled_env[-idx], 0, idx)
+                                 ))
+    wave *= scaled_env
+    return wave
+
+
+def play(midi):
+    note_dur = np.array([0.5, 0.5, 0.5, 0.33, 1, 1, 1, 2])/3
+    rest = np.array(note_dur.tolist()+[0]*len(note_dur))/8
+    frequencies = np.array([440*np.power(2, (i-69)/12) for i in midi])
+    a = [get_wave(i, freq=f) for i, f in zip(np.random.choice(
+        note_dur, size=len(frequencies)), frequencies/2)]
+    rests = np.random.choice(rest, len(a))
+    rests = [np.zeros(int(44100*i)) for i in rests]
+    a = np.concatenate([np.concatenate((i, j)) for i, j in zip(a, rests)])
+    wavfile.write('.temp.wav', rate=44100, data=a.astype(np.int16))
+    playsound.playsound('.temp.wav')
+
+###### CANTUS SPECIFIC
 
 def no_repeted_notes(sequence: Sequence, *args) -> bool:
     '''True if there isn't any repeted notes'''
@@ -224,17 +310,21 @@ def run_evolution(
         max_scores.append(np.max(popD.score))
 
         pp = '\n'.join(
-            [f"""{str(popD.loc[i,"sequence"])} {popD.loc[i,"score"]}"""
+            [f"""{' '.join(Vm2n(popD.loc[i,"sequence"]))} {popD.loc[i,"score"]}"""
              for i in popD.index]
         )
-        print(f"""Generation {i}\n{pp}""")
+        print(f"""
+               Generation {i}
+               ================
+{pp}(/{max_fit})
+              """)
         if popD.score.max() >= fitness_limit:
             end: float = time.time()
             print(f'Found a cantus in {round((end -start)*1000,2)} ms!')
             cantus = popD[popD.score == popD.score.max()].sequence.tolist()[0]
-            print(cantus)
-
-            break
+            print(' '.join(Vm2n(cantus)))
+            play(cantus)
+            return
 
         next_generation = popD.sequence.tolist()[:2]
 
@@ -262,7 +352,6 @@ def run_evolution(
                                       restricted_notes=restricted_notes)
         else:
             population = next_generation
-        print(n, len(next_generation))
         assert len(population) == population_size
     # population = sorted(
     #     population,
@@ -270,16 +359,17 @@ def run_evolution(
     # functions=fitness_list,key=key_center),
     #     reverse=True)
 
-    winners = popD[popD.score == popD.score.max()].sequence
-    return [i for i in winners], np.max(max_scores)
+    # winners = popD[popD.score == popD.score.max()].sequence
+    print('''No cantus generated this time!
+Changing parameters could help (see --help)''')
+    # return [i for i in winners], np.max(max_scores)
 
-def create_parser():
+
+def _parser():
     parser = argparse.ArgumentParser(description='Generate cantus firmus.')
 
-    parser.add_argument('--generations', default=1000, type=int,
-                        help='Maximum number of generations.')
-
-    parser.add_argument('--mode',  default=1, type=int, choices=range(1, 12),
+    parser.add_argument('-m', '--mode',  default=1, type=int,
+                        choices=range(1, 12),
                         help="""
                         1: ionian (major)
                         2: dorian
@@ -293,10 +383,13 @@ def create_parser():
                         help='Desired cantus length.')
 
     parser.add_argument('-p', '--population', default=20, type=int,
-                        help='sum the integers (default: find the max)')
+                        help='Population size.')
+
+    parser.add_argument('-g', '--generations', default=1000, type=int,
+                        help='Maximum number of generations.')
 
     parser.add_argument('-r', '--rate',  default=1., type=float,
-                        help='sum the integers (default: find the max).')
+                        help='Crossover mutation rate.')
 
     parser.add_argument('-n', '--number', default=3, type=int,
                         help='Number of mutations (should probably be\
@@ -306,32 +399,39 @@ def create_parser():
                         help='Mutation treshold (0 means sure, 1 impossible)')
     return parser
 
-parser = create_parser()
-args = parser.parse_args()
-key = args.mode + 59
-no_error = True
 
-if not (0. <= args.treshold <= 1.):
-    print('Threshold should be between 0 and 1!')
-    no_error = False
+def main():
+    parser = _parser()
+    args = parser.parse_args()
+    key = {1: 60, 2: 62, 3: 64, 4: 65, 5: 67, 6: 69, 7: 71}[args.mode]
+    no_error = True
 
-if not (0. <= args.rate <= 1.):
-    print('Crossover rate should be between 0 and 1!')
-    no_error = False
+    if not (0. <= args.treshold <= 1.):
+        print('Threshold should be between 0 and 1!')
+        no_error = False
 
-if (args.length > 25):
-    print("""Hmm that might be a bit ambitious, but let's try!
-          (disable this message and the waiting by using '-s','--silence'""")
-    time.sleep(3)
+    if not (0. <= args.rate <= 1.):
+        print('Crossover rate should be between 0 and 1!')
+        no_error = False
+
+    if (args.length > 25):
+        print("""Hmm that might be a bit ambitious, but let's try!
+            (disable this message and the waiting by using '-s','--silence'""")
+        time.sleep(3)
+
+    if no_error:
+        run_evolution(sequence_length=args.length,
+                      key_center=key,
+                      population_size=args.population,
+                      mut_nb=args.number,
+                      cross_rate=args.rate,
+                      generation_limit=args.generations,
+                      mut_tresh=args.treshold)
 # dissonant outline TT,7
 # tonic or dominant outlined triad
 # leap bask to same note
 # leap more than a third to penultimate note
-if (__name__ == '__main__') and no_error:
-    run_evolution(sequence_length=args.length,
-                  key_center=key,
-                  population_size=args.population,
-                  mut_nb=args.number,
-                  cross_rate=args.rate,
-                  generation_limit=args.generations,
-                  mut_tresh=args.treshold)
+
+
+if __name__ == '__main__':
+    main()
