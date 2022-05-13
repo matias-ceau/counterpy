@@ -297,7 +297,7 @@ def run_evolution(
                                      restricted_notes=restricted_notes)
 
     max_scores = []
-    for i in range(generation_limit):
+    for i in range(1,generation_limit+1):
         popD = pd.DataFrame({
             "sequence": population,
             "score": [fitness_func(sequence=seq,
@@ -314,8 +314,8 @@ def run_evolution(
              for i in popD.index]
         )
         print(f"""
-               Generation {i}
-               ================
+GENERATION {i}
+
 {pp}(/{max_fit})
               """)
         if popD.score.max() >= fitness_limit:
@@ -397,6 +397,9 @@ def _parser():
 
     parser.add_argument('-t', '--treshold', default=0.5, type=float,
                         help='Mutation treshold (0 means sure, 1 impossible)')
+
+    parser.add_argument('-s','--silence', action="store_true")
+
     return parser
 
 
@@ -414,7 +417,7 @@ def main():
         print('Crossover rate should be between 0 and 1!')
         no_error = False
 
-    if (args.length > 25):
+    if (args.length > 25) and not args.silence:
         print("""Hmm that might be a bit ambitious, but let's try!
             (disable this message and the waiting by using '-s','--silence'""")
         time.sleep(3)

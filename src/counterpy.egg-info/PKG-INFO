@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: counterpy
-Version: 0.0.1
+Version: 0.1.1
 Summary: Simple CLI cantus firmus generator based on a genetic algorithm
 Home-page: https://github.com/matias-ceau/counterpy
 Author: Matias Ceau
