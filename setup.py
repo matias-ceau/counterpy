@@ -7,7 +7,7 @@ long_description = (here / "README.rst").read_text(encoding="utf-8")
 setup(
     name='counterpy',
     packages=find_packages(where='src'),
-    version='0.0.1',
+    version='0.1.0',
     description='Simple CLI cantus firmus generator based on a genetic algorithm',
     author='Matias Ceau',
     author_email="matias@ceau.net",
