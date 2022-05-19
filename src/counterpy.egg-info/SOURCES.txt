@@ -2,6 +2,7 @@ MANIFEST.in
 README.rst
 pyproject.toml
 setup.py
+src/counterpy/.temp.wav
 src/counterpy/__init__.py
 src/counterpy/counterpy.py
 src/counterpy.egg-info/PKG-INFO

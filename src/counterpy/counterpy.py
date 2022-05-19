@@ -25,9 +25,9 @@ MIDICT = {k: f'\033[7;49;{_}m{v}\033[0m'
           for (k, v), _ in zip(MIDICT.items(), range(31, 38))}
 
 
-def midi2note(midi):
+def midi2note(midi, octave):
     return MIDICT[midi % 12]\
-        + f"\033[3m{str(midi // 12 - 1 - OCTAVESHIFT)}\033[23m"
+        + f"\033[3m{str(midi // 12 - OCTAVESHIFT + (octave-4))}\033[23m"
 
 
 Vm2n = np.vectorize(midi2note)
@@ -87,10 +87,12 @@ def get_wave(duration, freq=None, autodecay=20, s=44100):
     return wave
 
 
-def play(midi):
+def play(midi, octave):
+    midishift = (4 - OCTAVESHIFT - octave)*12
     note_dur = np.array([0.5, 0.5, 0.5, 0.33, 1, 1, 1, 2])/3
     rest = np.array(note_dur.tolist()+[0]*len(note_dur))/8
-    frequencies = np.array([440*np.power(2, (i-69)/12) for i in midi])
+    frequencies = np.array([440*np.power(2, (i-69)/12)
+                            for i in (midi - midishift)])
     a = [get_wave(i, freq=f) for i, f in zip(np.random.choice(
         note_dur, size=len(frequencies)), frequencies/2)]
     rests = np.random.choice(rest, len(a))
@@ -279,7 +281,8 @@ def run_evolution(
         mut_tresh:      float = 0.5,
         mut_nb:         int = 3,
         cross_rate:      float = 1,
-        generation_limit: int = 1000) -> Tuple[Population, int]:
+        generation_limit: int = 1000,
+        octave: int = 3) -> Tuple[Population, int]:
 
     start: float = time.time()
     if key_center not in [60, 62, 64, 65, 67, 69, 71]:
@@ -297,7 +300,7 @@ def run_evolution(
                                      restricted_notes=restricted_notes)
 
     max_scores = []
-    for i in range(1,generation_limit+1):
+    for i in range(1, generation_limit+1):
         popD = pd.DataFrame({
             "sequence": population,
             "score": [fitness_func(sequence=seq,
@@ -310,7 +313,7 @@ def run_evolution(
         max_scores.append(np.max(popD.score))
 
         pp = '\n'.join(
-            [f"""{' '.join(Vm2n(popD.loc[i,"sequence"]))} {popD.loc[i,"score"]}"""
+            [f"""{' '.join(Vm2n(popD.loc[i,"sequence"], octave))} {popD.loc[i,"score"]}"""
              for i in popD.index]
         )
         print(f"""
@@ -322,8 +325,8 @@ GENERATION {i}
             end: float = time.time()
             print(f'Found a cantus in {round((end -start)*1000,2)} ms!')
             cantus = popD[popD.score == popD.score.max()].sequence.tolist()[0]
-            print(' '.join(Vm2n(cantus)))
-            play(cantus)
+            print(' '.join(Vm2n(cantus, octave)))
+            play(cantus, octave)
             return
 
         next_generation = popD.sequence.tolist()[:2]
@@ -398,6 +401,9 @@ def _parser():
     parser.add_argument('-t', '--treshold', default=0.5, type=float,
                         help='Mutation treshold (0 means sure, 1 impossible)')
 
+    parser.add_argument('-o', '--octave', default=3, type=int,
+                        help='Octave for key center')
+
     parser.add_argument('-s','--silence', action="store_true")
 
     return parser
@@ -429,7 +435,8 @@ def main():
                       mut_nb=args.number,
                       cross_rate=args.rate,
                       generation_limit=args.generations,
-                      mut_tresh=args.treshold)
+                      mut_tresh=args.treshold,
+                      octave=args.octave)
 # dissonant outline TT,7
 # tonic or dominant outlined triad
 # leap bask to same note
